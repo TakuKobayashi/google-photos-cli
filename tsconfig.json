@@ -1,13 +1,17 @@
 {
   "compilerOptions": {
     "module": "commonjs",
-    "declaration": true,
+    "target": "es6",
     "outDir": "dist",
-    "downlevelIteration": true
+    "noImplicitAny": false,
+    "sourceMap": true,
+    "allowJs": false,
+    "declaration": true,
+    "esModuleInterop": true,
+    "strict": true,
+    "resolveJsonModule": true
   },
-  "include": [
-    "src",
-  ],
+  "include": ["src/**/*.ts"],
   "exclude": [
     "**/*.spec.ts",
     "node_modules",

@@ -1,12 +1,13 @@
 import { program } from 'commander';
 import { executeDownload } from './commands/download';
+import * as packageJson from '../package.json';
 
 /**
  * Set global CLI configurations
  */
 program.storeOptionsAsProperties(false);
 
-program.version(process.env.npm_package_version, '-v, --version', 'output the current version');
+program.version(packageJson.version, '-v, --version', 'output the current version');
 
 program
   .command('download')
