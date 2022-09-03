@@ -6,11 +6,11 @@
   "author": "TakuKobayashi",
   "license": "MIT",
   "bin": {
-    "google-photos-cli": "./bin/google-photos-cli.js"
+    "google-photos": "./bin/google-photos-cli.js"
   },
   "scripts": {
-    "build": "ts-node scripts/build.ts",
-    "watch": "ts-node scripts/build.ts -w",
+    "build": "ts-node scripts/build.ts exec",
+    "watch": "ts-node scripts/build.ts exec -w",
     "format": "prettier --config .prettierrc --write \"src/**/*.{ts,js}\"",
     "docs": "typedoc --out docs/ && touch docs/.nojekyll",
     "jest": "jest -c jest.config.js",
