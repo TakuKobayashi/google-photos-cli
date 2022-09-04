@@ -1,9 +1,9 @@
-import { google } from 'googleapis';
-import { Credentials, GenerateAuthUrlOpts, OAuth2ClientOptions, OAuth2Client } from 'google-auth-library';
+import { GenerateAuthUrlOpts, OAuth2ClientOptions, OAuth2Client } from 'google-auth-library';
 import { createServer, Server, ServerResponse, IncomingMessage } from 'http';
 import { AddressInfo } from 'net';
 import enableDestroy from 'server-destroy';
 import { ReadonlyDeep } from 'type-fest';
+import { LoginTokens } from '../commons/login-tokens';
 import open from 'open';
 const Photos = require('googlephotos');
 
@@ -21,7 +21,7 @@ export async function login(options: any): Promise<void> {
   const { port } = server.address() as AddressInfo;
   const client = new OAuth2Client({ ...globalOauth2ClientSettings, redirectUri: `http://localhost:${port}` });
   const authUrl = client.generateAuthUrl(oAuth2ClientAuthUrlOptions);
-  open(authUrl)
+  open(authUrl);
   const authCode = await recieveOauthCallbackCode(server);
   server.destroy();
   //tokens: {
@@ -37,6 +37,7 @@ export async function login(options: any): Promise<void> {
   // こんな感じのデータのtokensだけ取得する
   const { tokens } = await client.getToken(authCode);
   console.log(tokens);
+  LoginTokens.getInstance().update(tokens);
 }
 
 async function startLocalServer(): Promise<Server> {
