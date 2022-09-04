@@ -1,5 +1,6 @@
 import { program } from 'commander';
-import { executeDownload } from './commands/download';
+import { download } from './commands/download';
+import { login } from './commands/login';
 import * as packageJson from '../package.json';
 
 /**
@@ -9,10 +10,8 @@ program.storeOptionsAsProperties(false);
 
 program.version(packageJson.version, '-v, --version', 'output the current version');
 
-program
-  .command('download')
-  .description('download from google photos to image and video files')
-  .action(async (source, destination): Promise<void> => {
-    await executeDownload(destination);
-  });
+program.command('login').description('Log in to photoslibrary.google.com').action(login);
+
+program.command('download').description('download from google photos to image and video files').action(download);
+
 program.parse(process.argv);
