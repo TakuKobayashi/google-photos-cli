@@ -31,7 +31,7 @@ export class MediaItem {
     const dataStream = response.data;
     dataStream.pipe(writer);
     //    console.log(`length:${response.headers['content-length']}`)
-    if(this.onDownloadProgress){
+    if (this.onDownloadProgress) {
       dataStream.on('data', this.onDownloadProgress);
     }
     if (this.onDownloadFinish) {
