@@ -22,8 +22,9 @@ export async function login(options: any): Promise<void> {
   const client = new OAuth2Client({ ...globalOauth2ClientSettings, redirectUri: `http://localhost:${port}` });
   const authUrl = client.generateAuthUrl(oAuth2ClientAuthUrlOptions);
   open(authUrl);
-  const authCode = await recieveOauthCallbackCode(server);
-  server.destroy();
+  const authCode = await recieveOauthCallbackCode(server).finally(() => {
+    server.destroy();
+  });
   //tokens: {
   //  access_token: '...',
   //  scope: 'https://www.googleapis.com/auth/photoslibrary.readonly https://www.googleapis.com/auth/photoslibrary.sharing',

@@ -22,6 +22,10 @@ export class LoginTokens {
     return tokens;
   }
 
+  clear() {
+    fs.unlinkSync(this.tokenFilePath);
+  }
+
   static getInstance(): LoginTokens {
     if (!LoginTokens.instance) {
       LoginTokens.instance = new LoginTokens();

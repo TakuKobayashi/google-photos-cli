@@ -3,7 +3,7 @@ import { LoginTokens } from '../commons/login-tokens';
 import { MediaItem } from '../commons/media-item';
 import fs from 'fs';
 import { GooglePhotosMediaItemList } from '../interfaces/google-photos-api-response';
-import { DownloadCommandOptions } from '../interfaces/command-options'
+import { DownloadCommandOptions } from '../interfaces/command-options';
 const Photos = require('googlephotos');
 
 const loadApiPageSize = 100;

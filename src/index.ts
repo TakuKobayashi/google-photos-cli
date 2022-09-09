@@ -1,6 +1,7 @@
 import { program } from 'commander';
 import { download } from './commands/download';
 import { login } from './commands/login';
+import { logout } from './commands/logout';
 import { defaultProjectName } from './consts/project';
 import * as packageJson from '../package.json';
 
@@ -22,5 +23,7 @@ program
   )
   .description('download from google photos to image and video files')
   .action(download);
+
+program.command('logout').description('Logout to photoslibrary.google.com').action(logout);
 
 program.parse(process.argv);
