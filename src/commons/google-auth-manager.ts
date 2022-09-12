@@ -1,4 +1,4 @@
-import { GenerateAuthUrlOpts, OAuth2ClientOptions, OAuth2Client } from 'google-auth-library';
+import { GenerateAuthUrlOpts, OAuth2ClientOptions, OAuth2Client, Credentials } from 'google-auth-library';
 import { LoginTokens } from '../commons/login-tokens';
 import open from 'open';
 const Photos = require('googlephotos');
@@ -16,20 +16,36 @@ export class GoogleAuthManager {
   isLogin(): boolean {
     const tokens = this.loginTokens.load();
     if (tokens && tokens.expiry_date) {
-      return tokens.expiry_date! < new Date().getTime();
+      return tokens.expiry_date! > new Date().getTime();
     }
     return false;
   }
 
-  getToken(): String {
+  async getActivateAccessToken(): Promise<String> {
     const tokens = this.loginTokens.load();
     if (this.isLogin() && tokens.access_token) {
       return tokens.access_token;
     } else if (tokens.refresh_token) {
-      return tokens.refresh_token;
+      const newTokens = await this.refreshAccessToken();
+      if (newTokens.access_token) {
+        return newTokens.access_token;
+      } else {
+        return '';
+      }
     } else {
       return '';
     }
+  }
+
+  async refreshAccessToken(): Promise<Credentials> {
+    if (!this.oauth2Client) {
+      this.oauth2Client = new OAuth2Client(globalOauth2ClientSettings);
+    }
+    const prevTokens = this.loginTokens.load();
+    this.oauth2Client.setCredentials(prevTokens);
+    const response = await this.oauth2Client.refreshAccessToken();
+    this.loginTokens.update(response.credentials);
+    return response.credentials;
   }
 
   openLoginPage(options: Partial<OAuth2ClientOptions>) {
