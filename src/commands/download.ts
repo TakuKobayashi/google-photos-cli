@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { LoginTokens } from '../commons/login-tokens';
 import { MediaItem } from '../commons/media-item';
 import fs from 'fs';

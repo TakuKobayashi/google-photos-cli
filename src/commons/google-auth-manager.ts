@@ -1,4 +1,7 @@
+import { GenerateAuthUrlOpts, OAuth2ClientOptions, OAuth2Client } from 'google-auth-library';
 import { LoginTokens } from '../commons/login-tokens';
+import open from 'open';
+const Photos = require('googlephotos');
 
 const globalOauth2ClientSettings: OAuth2ClientOptions = {
   clientId: '1061841266327-8k3vdca5tbbmdiqqkobr8o9eeo81bjom.apps.googleusercontent.com',
@@ -7,17 +10,51 @@ const globalOauth2ClientSettings: OAuth2ClientOptions = {
 };
 
 export class GoogleAuthManager {
-  private loginTokens = LoginTokens.getInstance()
+  private loginTokens = LoginTokens.getInstance();
+  private oauth2Client?: OAuth2Client;
 
   isLogin(): boolean {
     const tokens = this.loginTokens.load();
-    if(tokens){
-      return tokens.expiry_date < new Date().getTime()
+    if (tokens && tokens.expiry_date) {
+      return tokens.expiry_date! < new Date().getTime();
     }
-    return false
+    return false;
   }
 
   getToken(): String {
     const tokens = this.loginTokens.load();
+    if (this.isLogin() && tokens.access_token) {
+      return tokens.access_token;
+    } else if (tokens.refresh_token) {
+      return tokens.refresh_token;
+    } else {
+      return '';
+    }
+  }
+
+  openLoginPage(options: Partial<OAuth2ClientOptions>) {
+    const oauthClientAuthUrlOptions: GenerateAuthUrlOpts = {
+      access_type: 'offline',
+      scope: [Photos.Scopes.READ_ONLY, Photos.Scopes.SHARING],
+    };
+    this.oauth2Client = new OAuth2Client({ ...globalOauth2ClientSettings, ...options });
+    const authUrl = this.oauth2Client.generateAuthUrl(oauthClientAuthUrlOptions);
+    open(authUrl);
+  }
+
+  async updateLoginTokens(authCode: string): Promise<void> {
+    if (this.oauth2Client) {
+      const { tokens } = await this.oauth2Client.getToken(authCode);
+      this.loginTokens.update(tokens);
+    }
+  }
+
+  logout() {
+    const tokens = this.loginTokens.load();
+    if (tokens.access_token) {
+      const client = new OAuth2Client({ ...globalOauth2ClientSettings });
+      client.revokeToken(tokens.access_token);
+    }
+    this.loginTokens.clear();
   }
 }
