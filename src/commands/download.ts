@@ -22,10 +22,12 @@ export async function download(options: DownloadCommandOptions): Promise<void> {
       requestObj.pageToken = nextPageToken;
     }
     const photosResponse = (await photos.transport.get('v1/mediaItems', requestObj)) as GooglePhotosMediaItemList;
+    const promises: Promise<void>[] = [];
     for (const mediaItem of photosResponse.mediaItems) {
       const item = new MediaItem(mediaItem);
-      item.downloadAndSaveFileStream();
+      promises.push(item.download(options.project));
     }
+    await Promise.all(promises);
     nextPageToken = photosResponse.nextPageToken;
   } while (nextPageToken);
 }

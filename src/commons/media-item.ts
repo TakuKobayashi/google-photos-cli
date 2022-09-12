@@ -4,10 +4,6 @@ import fs from 'fs';
 
 export class MediaItem {
   private mediaInfo: GooglePhotosMediaItem;
-  public onDownloadProgress?: (chunk: Buffer) => void;
-  public onDownloadFinish?: () => void;
-  public onDownloadFileClose?: () => void;
-  public onDownloadError?: (err: Error) => void;
 
   constructor(info: GooglePhotosMediaItem) {
     this.mediaInfo = info;
@@ -25,25 +21,41 @@ export class MediaItem {
     }
   }
 
-  async downloadAndSaveFileStream(): Promise<void> {
+  async download(projectRoot: String): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      this.downloadAndSaveFileStream(projectRoot, undefined, () => {
+        resolve();
+      });
+    });
+  }
+
+  async downloadAndSaveFileStream(
+    projectRoot: String,
+    onDownloadProgress?: (chunk: Buffer, totalSize: number) => void,
+    onDownloadFinish?: () => void,
+    onDownloadFileClose?: () => void,
+    onDownloadError?: (err: Error) => void,
+  ): Promise<void> {
     const response = await this.downloadFileStream();
-    const writer = fs.createWriteStream(['exports', this.mediaInfo.filename].join('/'));
+    const writer = fs.createWriteStream([projectRoot, this.mediaInfo.filename].join('/'));
     const dataStream = response.data;
     dataStream.pipe(writer);
-    //    console.log(`length:${response.headers['content-length']}`)
-    if (this.onDownloadProgress) {
-      dataStream.on('data', this.onDownloadProgress);
+    const totalSize = Number(response.headers['content-length']);
+    if (onDownloadProgress) {
+      dataStream.on('data', (chunk: Buffer) => {
+        onDownloadProgress(chunk, totalSize);
+      });
     }
-    if (this.onDownloadFinish) {
-      writer.on('finish', this.onDownloadFinish);
+    if (onDownloadFinish) {
+      writer.on('finish', onDownloadFinish);
     }
-    if (this.onDownloadFileClose) {
-      writer.on('close', this.onDownloadFileClose);
+    if (onDownloadFileClose) {
+      writer.on('close', onDownloadFileClose);
     }
     writer.on('error', (err) => {
       writer.close();
-      if (this.onDownloadError) {
-        this.onDownloadError(err);
+      if (onDownloadError) {
+        onDownloadError(err);
       }
     });
   }
