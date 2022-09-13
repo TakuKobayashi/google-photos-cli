@@ -21,29 +21,53 @@ export class MediaItem {
     }
   }
 
-  async download(projectRoot: String): Promise<void> {
+  async download({
+    projectRoot,
+    onStartDownload,
+    onDownloadProgress,
+  }: {
+    projectRoot: String;
+    onStartDownload?: (totalSize: number) => void;
+    onDownloadProgress?: (chunk: Buffer) => void;
+  }): Promise<void> {
     return new Promise<void>((resolve, reject) => {
-      this.downloadAndSaveFileStream(projectRoot, undefined, () => {
-        resolve();
+      this.downloadAndSaveFileStream({
+        projectRoot: projectRoot,
+        onStartDownload: onStartDownload,
+        onDownloadProgress: onDownloadProgress,
+        onDownloadFileClose: () => {
+          resolve();
+        },
       });
     });
   }
 
-  async downloadAndSaveFileStream(
-    projectRoot: String,
-    onDownloadProgress?: (chunk: Buffer, totalSize: number) => void,
-    onDownloadFinish?: () => void,
-    onDownloadFileClose?: () => void,
-    onDownloadError?: (err: Error) => void,
-  ): Promise<void> {
+  async downloadAndSaveFileStream({
+    projectRoot,
+    onStartDownload,
+    onDownloadProgress,
+    onDownloadFinish,
+    onDownloadFileClose,
+    onDownloadError,
+  }: {
+    projectRoot: String;
+    onStartDownload?: (totalSize: number) => void;
+    onDownloadProgress?: (chunk: Buffer) => void;
+    onDownloadFinish?: () => void;
+    onDownloadFileClose?: () => void;
+    onDownloadError?: (err: Error) => void;
+  }): Promise<void> {
     const response = await this.downloadFileStream();
     const writer = fs.createWriteStream([projectRoot, this.mediaInfo.filename].join('/'));
     const dataStream = response.data;
     dataStream.pipe(writer);
     const totalSize = Number(response.headers['content-length']);
+    if (onStartDownload) {
+      onStartDownload(totalSize);
+    }
     if (onDownloadProgress) {
       dataStream.on('data', (chunk: Buffer) => {
-        onDownloadProgress(chunk, totalSize);
+        onDownloadProgress(chunk);
       });
     }
     if (onDownloadFinish) {

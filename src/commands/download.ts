@@ -3,6 +3,7 @@ import { GoogleAuthManager } from '../commons/google-auth-manager';
 import fs from 'fs';
 import { GooglePhotosMediaItemList } from '../interfaces/google-photos-api-response';
 import { DownloadCommandOptions } from '../interfaces/command-options';
+import cliProgress, { SingleBar } from 'cli-progress';
 const Photos = require('googlephotos');
 
 const loadApiPageSize = 100;
@@ -22,12 +23,32 @@ export async function download(options: DownloadCommandOptions): Promise<void> {
       requestObj.pageToken = nextPageToken;
     }
     const photosResponse = (await photos.transport.get('v1/mediaItems', requestObj)) as GooglePhotosMediaItemList;
+    const multibar = new cliProgress.MultiBar(
+      {
+        clearOnComplete: false,
+        hideCursor: true,
+        format: ' {bar} | {filename} | {value} byte / {total} byte',
+      },
+      cliProgress.Presets.shades_classic,
+    );
     const promises: Promise<void>[] = [];
     for (const mediaItem of photosResponse.mediaItems) {
       const item = new MediaItem(mediaItem);
-      promises.push(item.download(options.project));
+      let progressBar: SingleBar | undefined = undefined;
+      const downloadPromise = item.download({
+        projectRoot: options.project,
+        onStartDownload: (totalSize: number) => {
+          progressBar = multibar.create(totalSize, 0);
+        },
+        onDownloadProgress: (chunk: Buffer) => {
+          progressBar?.increment(chunk.length, { filename: mediaItem.filename });
+        },
+      });
+      promises.push(downloadPromise);
     }
+
     await Promise.all(promises);
+    multibar.stop();
     nextPageToken = photosResponse.nextPageToken;
   } while (nextPageToken);
 }
